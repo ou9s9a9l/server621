@@ -5,6 +5,7 @@ var count=0;
 var iconv = require('iconv-lite');
 var assert = require('assert');
 var env ;
+var creat = require('./GpsCreat')();
 
 
 function StringifyStream(){
@@ -34,12 +35,18 @@ function convert_to_utf8(str){
 }
 //in  string  1100007972d1768c4ef7533a6700007972d176a47fc47e000033382e30323336362c3131342e353332393739ffff2259
 /*out gps:{ device: '特监二号机',
+1100007972109579723100380000007972109579724b6dd58b0000
   	group: '特监群组',
  	gpsdate: '38.02366,114.532979',
   	port: '4285' }*/
 function parse_gps(str){
+	console.log(str);
+	if(str.indexOf('797210957972'))
+	str = str.replace(/3100380000/,"00");
+
 	var vect = str.indexOf('0000',3);
 	var str3 = str.slice(6,vect);
+
 	var vect1 = str.indexOf('0000',vect+1);
 	//console.log(vect1+'vect1');
 	var str4 = str.slice(vect+4,vect1);
@@ -56,9 +63,8 @@ function parse_gps(str){
 }
 //处理gps数据 播报语音
 //gps数据  1100007972d1768c4ef7533a6700007972d176a47fc47e000033382e30323336362c3131342e353332393739  测监
-//         1100007972d1768c4ef7533a670000E765D97A65a47fc47e000033382e30323336362c3131342e353332393738 旧站
+//         1100007972d1768c4ef7533a670000DD4F9A5B000033382e30323336362c3131342e353332393738 保定
 StringifyStream.prototype._transform = function(str, encoding, cb){
-
 
 	if(typeof(str) == 'string' && str.indexOf('0000') != -1 && str.indexOf('0000') < 3)//是gps数据
 	{
@@ -86,7 +92,10 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	else if(typeof(str) == 'string' && str.indexOf('ffff') == -1)
 	{
 	if(env == 'develop'){console.log('播报文字: '+str);}	
-
+	console.log(str.slice(0,2));
+	var temp = this.gps.group.indexOf(str.slice(0,2));
+	if(temp == -1) return;
+	//console.log(this.gps.group);
 	var biz_content = str;
 	var gbkBytes = iconv.encode(biz_content,'gbk');
 	var gbkBytes1 = iconv.encode('100000'+gbkBytes.toString('hex'),'gbk');
@@ -95,9 +104,9 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	{
 		//analysis_gps return {distance:10000,zone:0}
 		if(result_text.road == '上行列车')
-		var result_gps = analysis_gps(up,this.gps.gpsdate);
+		var result_gps = analysis_gps(creat.up,this.gps.gpsdate);
 		if(result_text.road == '下行列车')
-		var result_gps = analysis_gps(down,this.gps.gpsdate);
+		var result_gps = analysis_gps(creat.down,this.gps.gpsdate);
 		if(result_gps != undefined)
 			{
 			console.log("result_text:"+result_text.zone);
@@ -134,9 +143,9 @@ var client ;
 setInterval(function(){
 	
 	if(connect == false)
-	{ //client = creat_server({port: 7001,host:"123.57.210.193"});
+	{ client = creat_server({port: 7001,host:"123.57.210.193"});
 	//client = creat_server({port: 7001,host:"192.168.8.102"});
-	//console.log('start connect');
+	console.log('start connect');
 	//	var gps = 1;
 	//Send_Gps(gps,client)
 	}	
@@ -288,129 +297,11 @@ function getDisance(lat1, lng1, lat2, lng2) { //#lat为纬度, lng为经度, 一
     return dis * 6378137;
 } 
 
-
- 
-var gpsup =[{JD:"123.751536",WD:"41.869543"},{JD:"123.736805",WD:"41.866053"},//290 276
-		  {JD:"123.721503",WD:"41.862398"},{JD:"123.706755",WD:"41.8588617"},//262 s
-		  {JD:"123.6867883",WD:"41.8542017"},{JD:"123.676659",WD:"41.852829"},//xn 224
-		  {JD:"123.661827",WD:"41.852078"},{JD:"123.648435",WD:"41.857069"},{JD:"123.635435",WD:"41.862069"}]//212 198
-var gpsdown = [ {JD:"123.636216",WD:"41.860365"},{JD:"123.652824",WD:"41.855099"},//187 203
-				{JD:"123.670792",WD:"41.852493"},{JD:"123.68702",WD:"41.8543183"},//219 x
-				{JD:"123.7066667",WD:"41.8589017"},{JD:"123.716167",WD:"41.861159"},//sn 257
-				{JD:"123.730528",WD:"41.864530"},{JD:"123.744889",WD:"41.867901"}]//271 283
-
-
-/////////////////////////////////////内部执行/////////////////////////////////////////:
-function gps_handle(gpsdate){
-console.log(gpsdate);
-
-
-}
-function creat_zone(gps1,gps2,cutnum,jwd){
-	var middle = {};var gpss = {};
-			gpss.gpsdate = [];
-			gpss.gps1 = gps1;
-			gpss.gps2 = gps2;
-	gpsup.forEach(function(gps){
-		var  temp = eval('gps.'+jwd);
-		var temp1 = eval('gps1.'+jwd);
-		var temp2 = eval('gps2.'+jwd);
-
-		if(temp1<temp&&temp<temp2||temp2<temp&&temp<temp2)
-		{
-			middle=gps
-			console.log('1 '+temp2-temp);
-			console.log('2 '+temp-temp1);
-		}
-	})
-	gpsdown.forEach(function(gps){
-		var  temp = eval('gps.'+jwd);
-		var temp1 = eval('gps1.'+jwd);
-		var temp2 = eval('gps2.'+jwd);
-		//console.log(' temp: '+temp+' temp1: '+temp1+' temp2: '+temp2);
-		if((temp1<temp&&temp<temp2)||(temp2<temp&&temp<temp1))
-		{
-			middle=gps;
-			gpss.gpsdate.push(gps)
-			//console.log(' temp: '+temp+' temp1: '+temp1+' temp2: '+temp2);
-		}
-	})
-gps_handle(gpss);
-var tempary =[];
-//console.log(middle);
-//assert(middle=={},'1')
-if(middle=={})
-{
-var jd = (parseFloat(middle.JD)-parseFloat(gps1.JD))/cutnum*2;
-var wd = (parseFloat(middle.WD)-parseFloat(gps1.WD))/cutnum*2;
-
-for (var a = 0;a < cutnum/2;a++)
-	{
-	var JD = parseFloat(gps1.JD)+a*jd;
-	var WD = parseFloat(gps1.WD)+a*wd;
-	var temp = []
-	temp.JD = JD;
-	temp.WD = WD;
-	tempary.push(temp);	
-	}
-var jd = (parseFloat(gps2.JD)-parseFloat(middle.JD))/cutnum*2;
-var wd = (parseFloat(gps2.WD)-parseFloat(middle.WD))/cutnum*2;
-for (var a = 0;a < cutnum/2;a++)
-	{
-	var JD = parseFloat(middle.JD)+a*jd;
-	var WD = parseFloat(middle.WD)+a*wd;
-	var temp = []
-	temp.JD = JD;
-	temp.WD = WD;
-	tempary.push(temp);	
-	}
-}
-else
-{
-	var jd = (parseFloat(gps2.JD)-parseFloat(gps1.JD))/cutnum;
-	var wd = (parseFloat(gps2.WD)-parseFloat(gps1.WD))/cutnum;
-
-	var tempary =[];
-for (var a = 0;a < cutnum;a++)
-	{
-	var JD = parseFloat(gps1.JD)+a*jd;
-	var WD = parseFloat(gps1.WD)+a*wd;
-	var temp = []
-	temp.JD = JD;
-	temp.WD = WD;
-	tempary.push(temp);	
-	}
-}
-/*
-var jd = (parseFloat(gps2.JD)-parseFloat(gps1.JD))/cutnum;
-var wd = (parseFloat(gps2.WD)-parseFloat(gps1.WD))/cutnum;
-
-var tempary =[];
-for (var a = 0;a < cutnum;a++)
-	{
-	var JD = parseFloat(gps1.JD)+a*jd;
-	var WD = parseFloat(gps1.WD)+a*wd;
-	var temp = []
-	temp.JD = JD;
-	temp.WD = WD;
-	tempary.push(temp);	
-	}*/
-return tempary;
-}
-
-
-creat_zone(gpsup[3],gpsup[4],20,'JD');
-
-var up = [],down = [];
-for (var a = 0;a < gpsup.length-1;a++)
-//up[a] =creat_zone(gpsup[a],gpsup[a+1],20,'JD')
-for (var a = 0;a < gpsdown.length-1;a++)
-//down[a] =creat_zone(gpsdown[a],gpsdown[a+1],20,'JD')
-
-
 var standgps = '41.856137,123.694446';
-analysis_gps(up,standgps);
+console.log(analysis_gps(creat.up,standgps));
+
 var str = '上行列车一接近进一道停车'
-analysis_text(str);
+console.log(analysis_text(str));
+
 //console.log(down);
 /////////////////////////////////////内部执行/////////////////////////////////////////

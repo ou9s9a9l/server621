@@ -64,7 +64,7 @@ app.use(function(err, req, res, next) {
         error: {}
     });
 });
-server.listen(8080);
+server.listen(8001);
 //module.exports = app;
 var a=0;
 var socketflag;
@@ -110,11 +110,10 @@ io.on('connection', function (socket) {
    eval("Server"+socket.rooms[1]+".setflag(io,'"+dat.dat+"')");
   });
 });
-var UpdateServer = require('./net/updatejz');
+var UpdateServer = require('./net/updatebd');
 //var ServerPNZ = new UpdateServer(io,25252,'PNZ');
 //var ServerSJZ = new UpdateServer(io,30000,'SJZ');
-var ServerJZ1 = new UpdateServer(io,21111,'JZ1');
-var ServerJZ2 = new UpdateServer(io,21112,'JZ2');
-//var ServerBDN = new UpdateServer(io,20001,'BDN');
+
+var ServerBDN = new UpdateServer(io,20001,'BDN');
 
 

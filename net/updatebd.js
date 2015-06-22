@@ -255,8 +255,7 @@ function data(io,zm,sock,port){
         for(a=1;a<4;a++)
         {
         array1[a]=data[a];
-        if (zm == 'BDN') array[a]=resbdn[data[a]];
-        else array[a]=res[data[a]];
+        array[a]=resbdn[data[a]];
         }
      
         var array3 = array.concat(array1);
@@ -308,7 +307,7 @@ var sendflag = false;
 
 var PraseGps = require('./PraseGps.js')//PraseGps解析的数据不能有“丰达00”这样结尾是0的
 var prasegpe = new PraseGps();
-//prasegpe.setenv('develop');
+prasegpe.setenv('develop');
 var stream = require('stream');
 var fs = require('fs')
 var str ;
@@ -372,8 +371,8 @@ net.createServer(function (socket) {
    socket.on('error',function (err){
    console.log("need:"+err);
   });
-}).listen(50001, function () {
-  console.log('server bound 50001  ');
+}).listen(50002, function () {
+  console.log('server bound 50002  ');
 });
 
 function new_rs(socket){
