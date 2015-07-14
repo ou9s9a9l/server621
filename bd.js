@@ -106,14 +106,20 @@ io.on('connection', function (socket) {
   socket.on('update1', function(dat){
    // UpdateServer.creatserver(io);
   // socket.write("0");
-   if (socket.rooms[1]!=undefined)
+   if (ZM.indexOf(socket.rooms[1])!=-1)
    eval("Server"+socket.rooms[1]+".setflag(io,'"+dat.dat+"')");
+   else 
+    console.log("错误的站名"+socket.rooms[1]);
   });
 });
-var UpdateServer = require('./net/updatebd');
 //var ServerPNZ = new UpdateServer(io,25252,'PNZ');
 //var ServerSJZ = new UpdateServer(io,30000,'SJZ');
+var UpdateServer = require('./net/updatebd');
+var Stserver = require('./net/stserver.js');
+var ZM = 'JZ,BDN'
+var stserver = new Stserver({port:50002,zm:'BDN'});//7001
+var ServerBDN = new UpdateServer(io,20001,'BDN',stserver);
+//var stserver1 = new Stserver({port:50001,zm:'JZ'});//7001
+//var ServerJZ = new UpdateServer(io,21111,'JZ',stserver1);
 
-var ServerBDN = new UpdateServer(io,20001,'BDN');
-
-
+//console.log(("BDN").toLowerCase());

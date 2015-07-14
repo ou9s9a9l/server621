@@ -25,14 +25,6 @@ function getDisance(lat1, lng1, lat2, lng2) { //#lat为纬度, lng为经度, 一
 
 
  
-var gpsup =[{JD:"123.751536",WD:"41.869543"},{JD:"123.736805",WD:"41.866053"},//290 276
-		  {JD:"123.721503",WD:"41.862398"},{JD:"123.706755",WD:"41.8588617"},//262 s
-		  {JD:"123.6867883",WD:"41.8542017"},{JD:"123.676659",WD:"41.852829"},//xn 224
-		  {JD:"123.661827",WD:"41.852078"},{JD:"123.648435",WD:"41.857069"},{JD:"123.635435",WD:"41.862069"}]//212 198
-var gpsdown = [ {JD:"123.636216",WD:"41.860365"},{JD:"123.652824",WD:"41.855099"},//187 203
-				{JD:"123.670792",WD:"41.852493"},{JD:"123.68702",WD:"41.8543183"},//219 x
-				{JD:"123.7066667",WD:"41.8589017"},{JD:"123.716167",WD:"41.861159"},//sn 257
-				{JD:"123.730528",WD:"41.864530"},{JD:"123.744889",WD:"41.867901"}]//271 283
 
 
 /////////////////////////////////////内部执行/////////////////////////////////////////:
@@ -55,7 +47,11 @@ return tempary;
 module.exports = Creat;
 
 
-function Creat(){
+function Creat(option){
+
+var gpsup = require('../public/date'+option.zm.toLowerCase()).getgpsup();
+var gpsdown = require('../public/date'+option.zm.toLowerCase()).getgpsdown()
+
 var gps = {};
 var up = [],down = [];
 for (var a = 0;a < gpsup.length-1;a++)

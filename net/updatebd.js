@@ -17,13 +17,11 @@ function crc16(buf)
   cl = crc % 256;
 }
 
-var resource = require('../public/datejz')
-var res=resource.returndatres();
-var resourcebdn = require('../public/datebdn')
-var resbdn=resourcebdn.returndatres();
-  var resetflag=0;//是否写程序开关  主动
 
-  var buflen=128;
+
+var resetflag=0;//是否写程序开关  主动
+
+var buflen=128;
 var buf=new Buffer(buflen+4);
 var buf1=new Buffer(buflen+4);
 var len,len1;
@@ -44,13 +42,15 @@ var range1 = this;
 module.exports = Server;
 
 
-function Server(io,port,zm){
-
+function Server(io,port,zm,prasegps){
+ console.log(zm);
+var resbdn = require('../public/date'+zm.toLowerCase())();
 var EventEmitter = require('events').EventEmitter;  
 var ee = new EventEmitter();
 this.ZM=zm;
 var range=this;
 //var sock;
+
 var socktemp;
     creatserver(io,port,range,ee);
 
@@ -58,14 +58,14 @@ var socktemp;
     console.log(socket.socket.remotePort );
     sock=socket.socket;
     //this.sock=socket.socket;
-    data(io,zm,sock,port);update(io,sock);console.log('2 server complete');
+    data(io,zm,sock,port,prasegps);update(io,sock);console.log('2 server complete');
 
   });
 
 
 
 //this.port = port;
-};//serverc
+
 
 
 Server.prototype.setflag = function (io,dat){
@@ -238,12 +238,12 @@ if(resetflag){
 
 
 ////////////////////////////////////////shuju
-function data(io,zm,sock,port){
+function data(io,zm,sock,port,prasegps){
   var count2=0;//心跳计数
     var count1=0;//数据计数
 
   sock.on('data', function (data) {
- // console.log(data);
+  console.log(data);
     if(data[0]==0xff)//数据
     {
         count1++;
@@ -265,24 +265,9 @@ function data(io,zm,sock,port){
 	//rss[1].push( array[3]+array[1]+array[2]);
 	//rss[0].push( array[3]+array[1]+array[2]);
 //	var str = array[3]+array[1]+array[2];
-	if(bcastcontent != str &&sendflag ==false)
-	{
-  console.log('rss.length:'+rss.length);
-	console.log(new Date());
-	 for(var a=0;a<rss.length;a++)
-    {
-
-    rss[a].push(str);
-	  bcastcontent = str;
-    sendflag = true;
-	  setTimeout(function(){
-      sendflag = false;
-      bcastcontent = '';
-      console.log('5s结束 可以开始发送');
-      }, 5000);
-  
-	  }
-	}
+  if(prasegps != undefined)
+    prasegps.sendtext(str);
+	
 
 	
 	}
@@ -296,122 +281,12 @@ function data(io,zm,sock,port){
           io.in(zm).emit('success', { dat:count2 })
       }
 ///////////////////////////////////////////////////升级程序///////////////
- 
-
-   
-  
    });
 }
-var bcastcontent = '';
-var sendflag = false;
 
-var PraseGps = require('./PraseGps.js')//PraseGps解析的数据不能有“丰达00”这样结尾是0的
-var prasegpe = new PraseGps();
-prasegpe.setenv('develop');
-var stream = require('stream');
-var fs = require('fs')
-var str ;
-var sockets = new Array;
-var rss = new Array;
-/*setInterval(function(){
-  if(rss.length>0)
-{
-  for(var a=0;a<rss.length;a++)
-  {
-    //console.log(rss[a].count);
-    rss[a].count++;
-    if(rss[a].count>20)
-      {
-	console.log('rss port:'+rss[a].port);
-	rss = rss.slice(a+1);
-    console.log('rss:'+(a+1)+' is sliced');}
-  }
-}
-},1000);*/
 
-var net = require('net');
-net.createServer(function (socket) {
-  // 新的连接
-  console.log('CONNECTED: ' + socket.remoteAddress + ':' + socket.remotePort);
-  socket.count = 0;
-  sockets.push(socket);
-  //console.log(sockets.length);
-  new_rs(socket);  
-//console.log(socket.id.toString());
-  socket.on('data', function (data) {
 
-	var flag = 0;
-  	for(var a=0;a<rss.length;a++)
-	{
-		//console.log(rss[a].port);
-		if(rss[a].port == socket.remotePort)
-			{rss[a].count = 0;flag=1}
-	}
-	if(flag == 0)
-	{
-	new_rs(socket);
-	}
 
-  //  console.log(data);
-  //  sockets = sockets.slice(0);
-    //console.log(sockets.length);
-    var str = data.toString();
-	for(var a=0;a<rss.length;a++)
-	{
-	if(rss[a].firstcast == false)
-   //  { console.log('firstcast:'+rss[a].firstcast+'port:'+rss[a].port);rss[a].push('登陆语音提示系统');rss[a].firstcast = true;}
-		if(rss[a].port == socket.remotePort)
-		    {rss[a].push(str+'ffff'+socket.remotePort);}
-	} 
-//rs.push(str+'ffff'+socket.remotePort);	
-//console.log('rss length'+rss.length)
-   // console.log(data+'\n');
-  
-});
-   socket.on('error',function (err){
-   console.log("need:"+err);
-  });
-}).listen(50002, function () {
-  console.log('server bound 50002  ');
-});
 
-function new_rs(socket){
-console.log('new_rs/////////////////////////////////////////')
-   var rs = new stream.Readable({ objectMode: true });
 
-  rs.on('error',function (err)//必须监听  否则出event的错
-	  { 
-		//console.log(err);//
-      }
-	);
-    socket.on('error',function (err)
-    { 
-    console.log('socket error');
-      }
-  );
-
- 
-  socket.on('unpipe', function(err) {
-    console.log('unpipe');
-  for(var a=0;a<rss.length;a++)
-    {
-      if(rss[a].port == socket._peername.port)
-      {
-      //console.log('rss port:'+rss[a].port);
-      rss = rss.slice(a+1);
-      console.log('rss:'+(a+1)+' is sliced');}
-    }
-  
-  });
-
-  var prasegpe = new PraseGps()
-  //{"device":"旧站车务二号机","group":"旧站车务定点防护","gps":"\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"}
-  
-  rs.pipe(prasegpe).pipe(socket);
-  rs.on('end',function(){console.log('message');})
-  rs.port = socket.remotePort;
-  rs.count = 0;
-  rs.firstcast = false;
-  rss.push(rs);
-  console.log('rsslength:'+rss.length);
-}
+};//serverc

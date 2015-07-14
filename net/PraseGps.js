@@ -5,16 +5,33 @@ var count=0;
 var iconv = require('iconv-lite');
 var assert = require('assert');
 var env ;
-var creat = require('./GpsCreat')();
+var creat;
+//var creat = require('./GpsCreat')();
+var connect = false;
+var client ;
 
 
-function StringifyStream(){
+function StringifyStream(option){
     stream.Transform.call(this);
-    
+    client = option.client||{};
+  	creat = require('./GpsCreat')(option);
     this._readableState.objectMode = false;
     this._writableState.objectMode = true;
+    var standgps = '41.856137,123.694446';
+console.log(analysis_gps(creat.up,standgps));
+
+var str = '上行列车一接近进一道停车'
+console.log(analysis_text(str));
+  
+
 }
 util.inherits(StringifyStream, stream.Transform);
+
+StringifyStream.prototype.remoteserver = function(ip){
+	
+
+	
+}
 StringifyStream.prototype.get = function(key){
 	
 	return eval(key);
@@ -41,24 +58,23 @@ function convert_to_utf8(str){
   	port: '4285' }*/
 function parse_gps(str){
 	console.log(str);
-	if(str.indexOf('797210957972'))
-	str = str.replace(/3100380000/,"00");
+	var gps = {};
 
+	{
 	var vect = str.indexOf('0000',3);
 	var str3 = str.slice(6,vect);
-
 	var vect1 = str.indexOf('0000',vect+1);
-	//console.log(vect1+'vect1');
 	var str4 = str.slice(vect+4,vect1);
 	var vect = str.indexOf('ffff',3);
 	var gpsdate = str.slice(vect1+4,vect);
 	var port = str.slice(vect+4,str.length);
 
-	var gps = {};
+	
 	gps.device = convert_to_ucs2(str3);
 	gps.group = convert_to_ucs2(str4);
 	gps.gpsdate = convert_to_utf8(gpsdate);
 	gps.port = port;
+	}
 	return gps;
 }
 //处理gps数据 播报语音
@@ -75,6 +91,7 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	console.log(this.gps.device+this.gps.group+this.gps.gpsdate+' '+this.gps.port);
 	
 /////////////////////////////////向杜工服务器发送gps	
+	console.log('send'+client);
 	if(client != undefined )
 	{var length = 1;
 	if(this.sendgps!=undefined)
@@ -93,8 +110,9 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	{
 	if(env == 'develop'){console.log('播报文字: '+str);}	
 	console.log(str.slice(0,2));
-	var temp = this.gps.group.indexOf(str.slice(0,2));
-	if(temp == -1) return;
+	if(this.gps != undefined)
+	{var temp = this.gps.group.indexOf(str.slice(0,2));
+	if(temp == -1) return;}
 	//console.log(this.gps.group);
 	var biz_content = str;
 	var gbkBytes = iconv.encode(biz_content,'gbk');
@@ -138,18 +156,7 @@ module.exports = StringifyStream;
 
 
 ///////////////////////////////////////////////////////////////////gps send////
-var connect = false;
-var client ;
-setInterval(function(){
-	
-	if(connect == false)
-	{ client = creat_server({port: 7001,host:"123.57.210.193"});
-	//client = creat_server({port: 7001,host:"192.168.8.102"});
-	console.log('start connect');
-	//	var gps = 1;
-	//Send_Gps(gps,client)
-	}	
-}, 20000);
+
 
 
 function Send_Gps(gps){
@@ -248,7 +255,7 @@ function creat_server(options){
 options = options||{port:8080,host:"192.168.1.9"}
 var net = require('net');
 
-
+console.log('creat_server');
 var client = net.connect(options,
     function() { //'connect' listener
   console.log('connected to server!');
@@ -297,11 +304,7 @@ function getDisance(lat1, lng1, lat2, lng2) { //#lat为纬度, lng为经度, 一
     return dis * 6378137;
 } 
 
-var standgps = '41.856137,123.694446';
-console.log(analysis_gps(creat.up,standgps));
 
-var str = '上行列车一接近进一道停车'
-console.log(analysis_text(str));
 
 //console.log(down);
 /////////////////////////////////////内部执行/////////////////////////////////////////
