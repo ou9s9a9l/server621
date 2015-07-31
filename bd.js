@@ -116,9 +116,10 @@ io.on('connection', function (socket) {
 //var ServerSJZ = new UpdateServer(io,30000,'SJZ');
 var UpdateServer = require('./net/updatebd');
 var Stserver = require('./net/stserver.js');
-var ZM = 'JZ,BDN'
+var ZM = 'JZ,BDN,BDN1'
 var stserver = new Stserver({port:50002,zm:'BDN'});//7001
-var ServerBDN = new UpdateServer(io,20001,'BDN',stserver);
+var ServerBDN = new UpdateServer(io,20002,'BDN',stserver);
+//var ServerBDN1 = new UpdateServer(io,20001,'BDN1',stserver);
 //var stserver1 = new Stserver({port:50001,zm:'JZ'});//7001
 //var ServerJZ = new UpdateServer(io,21111,'JZ',stserver1);
 

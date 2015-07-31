@@ -17,12 +17,7 @@ function StringifyStream(option){
   	creat = require('./GpsCreat')(option);
     this._readableState.objectMode = false;
     this._writableState.objectMode = true;
-    var standgps = '41.856137,123.694446';
-console.log(analysis_gps(creat.up,standgps));
-
-var str = '上行列车一接近进一道停车'
-console.log(analysis_text(str));
-  
+    
 
 }
 util.inherits(StringifyStream, stream.Transform);
@@ -57,7 +52,7 @@ function convert_to_utf8(str){
  	gpsdate: '38.02366,114.532979',
   	port: '4285' }*/
 function parse_gps(str){
-	console.log(str);
+	//console.log(str);
 	var gps = {};
 
 	{
@@ -78,12 +73,15 @@ function parse_gps(str){
 	return gps;
 }
 //处理gps数据 播报语音
+//3131303030306464346639613562353735333664353166373533303030303739373264313736613437666334376530303030ffff2176
 //gps数据  1100007972d1768c4ef7533a6700007972d176a47fc47e000033382e30323336362c3131342e353332393739  测监
 //         1100007972d1768c4ef7533a670000DD4F9A5B000033382e30323336362c3131342e353332393738 保定
 StringifyStream.prototype._transform = function(str, encoding, cb){
-
+	//console.log('data: '+str);console.log('index:'+str.indexOf('0000'));
+	//console.log(str);
 	if(typeof(str) == 'string' && str.indexOf('0000') != -1 && str.indexOf('0000') < 3)//是gps数据
 	{
+	//console.log('gps');
 	if(env == 'develop'){console.log('gps数据分析: '+str);}	
 	this.gps = parse_gps(str)
 	
@@ -91,12 +89,13 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	console.log(this.gps.device+this.gps.group+this.gps.gpsdate+' '+this.gps.port);
 	
 /////////////////////////////////向杜工服务器发送gps	
-	console.log('send'+client);
+	//console.log(client);
+
 	if(client != undefined )
 	{var length = 1;
 	if(this.sendgps!=undefined)
         length = distance(divide_gps(this.gps.gpsdate),divide_gps(this.sendgps));
-	//	if(length >= 10||this.sendgps ==undefined)
+		if(length >= 10)
      	{
 		var buffanal = Send_Gps(this.gps);
 		client.write(buffanal);
@@ -110,9 +109,9 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	{
 	if(env == 'develop'){console.log('播报文字: '+str);}	
 	console.log(str.slice(0,2));
-	if(this.gps != undefined)
-	{var temp = this.gps.group.indexOf(str.slice(0,2));
-	if(temp == -1) return;}
+
+	if(this.gps != undefined&&this.gps.group.indexOf(str.slice(0,2)) != -1)
+{	
 	//console.log(this.gps.group);
 	var biz_content = str;
 	var gbkBytes = iconv.encode(biz_content,'gbk');
@@ -141,6 +140,7 @@ StringifyStream.prototype._transform = function(str, encoding, cb){
 	//console.log('没有gps');
   	else {this.push(gbkBytes1);
 	if(env == 'develop')console.log('没有收到gps');}
+}
 	}	
 	
 	else {if(env == 'develop')console.log("error message");}

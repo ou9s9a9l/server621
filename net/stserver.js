@@ -7,10 +7,12 @@ var sockets = new Array;
 var rss = new Array;
 var net = require('net');
 var bcastcontent = '';
-var sendflag = false;
+
 module.exports = moduleout;
+
 moduleout.prototype.sendtext = function (str){
-  if(bcastcontent != str ||sendflag ==false)
+
+  if(bcastcontent != str)
   {
     console.log('rss.length:'+rss.length);
     console.log(new Date());
@@ -19,18 +21,22 @@ moduleout.prototype.sendtext = function (str){
 
     rss[a].push(str);
     bcastcontent = str;
-    sendflag = true;
-    setTimeout(function(){
-      sendflag = false;
-      bcastcontent = '';
-      console.log('5s结束 可以开始发送');
-      }, 5000);
+
+   
   
     }
   }
 }
-var connect = false;
 
+var connect = false;
+setInterval(function(){
+  for(var a=0;a<rss.length;a++)
+    {
+      rss[a].count++;
+      if(rss[a].count>6)
+        {rss.splice(a,1);console.log('splice:'+a);}
+    }
+  }, 5000);
 function moduleout(option){
 var options = option||{}; 
 
@@ -38,8 +44,8 @@ var options = option||{};
   setInterval(function(){
   if(connect == false)
   { //client = creat_server({port: 7001,host:"123.57.210.193"});
-  client = creat_server({port: option.remoteport||7001,host:option.remoteip||"192.168.8.102"});
-  console.log('start connect');
+  //client = creat_server({port: option.remoteport||7001,host:option.remoteip||"192.168.8.102"});
+  //console.log('start connect');
   
   } 
   }, 10000);
@@ -47,6 +53,7 @@ var options = option||{};
 
 net.createServer(function (socket) {
   // 新的连接
+  
   console.log('CONNECTED: ' + socket.remoteAddress + ':' + socket.remotePort);
   socket.count = 0;
   sockets.push(socket);
@@ -71,13 +78,18 @@ net.createServer(function (socket) {
   //  sockets = sockets.slice(0);
     //console.log(sockets.length);
     var str = data.toString();
+    //console.log('data: '+str);
 	for(var a=0;a<rss.length;a++)
 	{
-	if(rss[a].firstcast == false)
+    
+	//if(rss[a].firstcast == false)
    //  { console.log('firstcast:'+rss[a].firstcast+'port:'+rss[a].port);rss[a].push('登陆语音提示系统');rss[a].firstcast = true;}
-		if(rss[a].port == socket.remotePort)
+		//console.log('rss[a].port: '+rss[a].port+' socket.remotePort: '+socket.remotePort);
+    if(rss[a].port == socket.remotePort)
 		    {rss[a].push(str+'ffff'+socket.remotePort);}
 	} 
+  //110000dd4f9a5b57536d51f7530000dd4f9a5b57533575a1520000
+  //110000dd4f9a5b57536d51f75300007972d176a47fc47e0000//tejian
 //rs.push(str+'ffff'+socket.remotePort);	
 //console.log('rss length'+rss.length)
    // console.log(data+'\n');
@@ -95,9 +107,9 @@ net.createServer(function (socket) {
 function new_rs(socket,client){
 console.log('new_rs/////////////////////////////////////////')
    var rs = new stream.Readable({ objectMode: true });
-
+   
   rs.on('error',function (err)//必须监听  否则出event的错
-	  { 
+	  {
 		//console.log(err);//
     }
 	);
@@ -112,11 +124,12 @@ console.log('new_rs/////////////////////////////////////////')
     console.log('unpipe');
   for(var a=0;a<rss.length;a++)
     {
-      if(rss[a].port == socket._peername.port)
-      {
+      //console.log('NUM:'+a+'port:'+rss[a].port);
+      //if(rss[a].port == socket._peername.port)
+      //{
       //console.log('rss port:'+rss[a].port);
       rss = rss.slice(a+1);
-      console.log('rss:'+(a+1)+' is sliced');}
+     // console.log('rss:'+(a+1)+' is sliced');}
     }
   
   });

@@ -63,3 +63,9 @@ gps.down = down;
 return gps;
 }
 //console.log(down[0][0]);
+//var a=[];
+//a.push('1');
+//a.push('2');
+//var b = a.shift();
+//var b = a.shift();
+//console.log(a.length);

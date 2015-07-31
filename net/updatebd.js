@@ -34,15 +34,42 @@ var datlen;
      filearray[1]='public/package.bin';
      filearray[2]='public/adc.bin';
 
-
+var trans_server = 0;
 
 
 
 var range1 = this;
 module.exports = Server;
 
+var boardcast = [];
+
+    setInterval(function(){
+    //console.log('sendcast');
+      if(boardcast.length>0)
+        {
+          console.log('boardcast '+boardcast);
+          sendserver.sendtext(boardcast.shift());
+          
+       }
+    },4000);
+    /*
+setInterval(function(){
+    //console.log('sendcast');
+      if(sendflag == false && boardcast.length>0)
+        {
+          console.log('boardcast '+boardcast);
+          sendserver.sendtext(boardcast.shift());
+          sendflag = true;
+          setTimeout(function(){
+            sendflag = false;
+          }, 4000);
+       }
+    },4000);
+    */
+var sendserver;
 
 function Server(io,port,zm,prasegps){
+  sendserver = prasegps;
  console.log(zm);
 var resbdn = require('../public/date'+zm.toLowerCase())();
 var EventEmitter = require('events').EventEmitter;  
@@ -126,12 +153,24 @@ tcpsendserver1.listen(port, function () {
   console.log('server '+port+' bound');
 });
 
+
+  
+  net.createServer(function (socket) {
+  // 新的连接
+  socket_trans=socket;
+  socket.on('data', function (data) {
+  });
+  socket.on('error',function (err){
+   console.log("err:"+err);
+  });
+  }).listen(port+10000, function () {
+  console.log('trans server bound '+(port+10000)); 
+  });
+
 }
 
 
-
-
-
+var socket_trans;
 
 /////////////////////////////////////gengxin
 function update(io,sock) {
@@ -241,15 +280,50 @@ if(resetflag){
 function data(io,zm,sock,port,prasegps){
   var count2=0;//心跳计数
     var count1=0;//数据计数
-
+    
   sock.on('data', function (data) {
-  console.log(data);
+    if(socket_trans != undefined)
+        socket_trans.write(data);
+    if(data[1]!=0x11)//raw 数据
+    {var str = data.toString('hex');
+
+      var a = str.match(/ff\w{6}ff/g);
+      if(a!=null)
+      var temp = new Buffer(a[0],'hex');
+      if(a!=null&&temp[1]!=0xff&&temp[2]!=0xff&&temp[3]!=0xff)
+        {data = new Buffer(a[0],'hex');console.log('convert');
+      
+        }
+         
+      
+      
+    }
+
+    if(data[0]==0x01 && data[1] == 0x12)
+    {
+      var str = data.toString('hex');
+      if(data.length%11 !=0)
+        {str = str.slice(str.indexOf('ff'));
+      console.log(str);}
+     
+    }
     if(data[0]==0xff)//数据
     {
+      //01 12 04 00 01 00 4a 8c 95 8e 03 
+      //01 12 04 00 01 00 de 03 21 c6 03 
+      //01 12 04 00 01 00 d6 0a 39 46 03 
+      //01 12 04 00 01 00 4a 8c 95 8e 03
+      //01 12 04 00 01 00 e6 83 3c 72 03 
+      //01 12 04 00 01 00 e6 83 3c 72 03
+      //01 12 04 00 01 00 98 8a 86 0d 03 
+      //01 12 04 00 01 00 98 8a 86 0d 03 
+      //01 12 04 00 01 00 60 0c ed 2b 03
+      //01 12 04 00 01 00 df 03 12 f7 03 
+      //01 12 04 00 01 00 df 03 12 f7 03
         count1++;
         console.log(data);
-        array=new Array(data.length-1);
-        array1=new Array(data.length-1);
+        array=new Array(4);
+        array1=new Array(4);
         array[0]=count1;
         array1[0]=count1;
         for(a=1;a<4;a++)
@@ -265,8 +339,8 @@ function data(io,zm,sock,port,prasegps){
 	//rss[1].push( array[3]+array[1]+array[2]);
 	//rss[0].push( array[3]+array[1]+array[2]);
 //	var str = array[3]+array[1]+array[2];
-  if(prasegps != undefined)
-    prasegps.sendtext(str);
+  if(boardcast.indexOf(str) == -1)
+  boardcast.push(str);
 	
 
 	
@@ -274,10 +348,6 @@ function data(io,zm,sock,port,prasegps){
     if(data[0]==0x33)//心跳
       {
           count2++;
-          console.log(count2);
-          console.log(sock.remotePort);
-           if(resetflag==1)
-          {sock.write("2");console.log("write");}
           io.in(zm).emit('success', { dat:count2 })
       }
 ///////////////////////////////////////////////////升级程序///////////////
